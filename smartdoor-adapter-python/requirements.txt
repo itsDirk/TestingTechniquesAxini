@@ -1,0 +1,9 @@
+wheel
+sphinx~=8.2.3
+sphinx-rtd-theme
+protobuf
+websocket-client~=1.8.0
+setuptools==75.9.1
+build
+virtualenv
+datetime
