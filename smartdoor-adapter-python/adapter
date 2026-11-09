@@ -4,7 +4,7 @@
 
 HOSTNAME=$(hostname)
 NAME=smartdoor-adapter-python@${HOSTNAME}
-URL=
-TOKEN=
+URL=wss://course02.axini.com:443/adapters
+TOKEN=axini_cd6bee9ce8e267d59fec6f2ef791b6f1a1e6c747cb5ff65f393dc6d6e89e258ca752
 
-python src/adapter/plugin_adapter.py -n $NAME -u $URL -t $TOKEN
+./.venv/bin/python3.12 src/adapter/plugin_adapter.py -n $NAME -u $URL -t $TOKEN
