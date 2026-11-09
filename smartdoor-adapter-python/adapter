@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Convenience script to start the SmartDoor adapter.
+
+HOSTNAME=$(hostname)
+NAME=smartdoor-adapter-python@${HOSTNAME}
+URL= #"ws://127.0.0.1:3001"
+TOKEN= #"axini_cd6bee9ce8e267d59fec6f2ef791b6f1ale6c747cb5ff65f393cdc6d6e89e"
+
+python src/adapter/plugin_adapter.py -n $NAME -u $URL -t $TOKEN
