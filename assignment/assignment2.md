@@ -13,7 +13,7 @@ We begin by giving a short summarization of our SUT taken from the first assignm
 
 Our system-under-test is [Synapse](https://github.com/element-hq/synapse) (v1.164.2), a (home)server developed by [Element](https://element.io/). Synapse is an open source instance of [Matrix](https://matrix.org/) (v1.19) written in Python. Using Synapse, the user can locally run a chat server and connect to it using a web client on [app.element.io](https://app.element.io/). These enable communication in accordance with the Matrix communication protocol. Therefore we will create a model of the Matrix communication protocol and test whether Synapse complies with this protocol.
 
-We will be testing the basic messaging functionalities of the SUT such as: creating a room, sending a message and deleting a message.
+We will be testing the basic messaging functionalities of the SUT such as: creating a room, sending a message and deleting a message ==TODO update==.  
 
 The interface utilized during testing is the client-server API. Relevant documentation can be found in the [Matrix specification](https://spec.matrix.org/v1.19/client-server-api/). Refer to the following chapters:
 
@@ -29,26 +29,43 @@ The interface utilized during testing is the client-server API. Relevant documen
 
 ## Exericise 3: Description of the Model
 
-Our model assumes we start in a state where the user has been logged in and authenticated but nothing else has happened. The only event that can take place at the beginning is creating a room. 
+Compared to the testing domain of assignment 1, we have decided to drop tests expecting HTTP status codes 404 (Not Found) and 405 (Method Not Allowed), as they concern invalid HTTP endpoints, and the only way to conclude an endpoint does not exist would be to specify all Matrix endpoints that do exist.
 
-Once a room has been created, we enter a loop allowing the following actions:
-- Sending a message,
-- Deleting a message.
-The loop follows a simple request-reponse format, so we will explain all possible transitions in a table following this format.
+Our model assumes we start in a state where the user is logged in and is authenticated but nothing else has happened. The only event that can take place in this state is room creation. Once a room has been created, we enter a loop where any of the following actions are allowed to take place:
+- Sending a message
+- Deleting a message
+- Editing a message
+- Pinning a message
+- Replying to a message (with another message)
+- Reacting to a message (with an emoji)
 
-For each possible action we have a corresponding simulus in the Axini model. The possible responses are either a succes or error response, which all have the same format.
+The loop follows a simple request-response format, so we will explain all possible transitions in a table following this format. For each possible action we have a corresponding stimulus in the Axini model. The possible responses are either a success or error response, which all have the same format. 
 
-| Stimulus     | Parameters                                                        | Reponse | Parameters                                                  |
-|--------------|-------------------------------------------------------------------|---------|-------------------------------------------------------------|
-| create_room  | name : String                                                     | succes  | code : integer<br>id : integer                              |
-| send_message | message : String<br>room_id : Integer                             | error   | code : integer<br>error_msg : String<br>error_text : String |
-| delete_event | event_id : Integer<br>room_id : Integer<br>redaction_id : Integer |         |                                                             |
+| Action                | Stimulus      | Parameters                                                     | Constraints |
+| --------------------- | ------------- | -------------------------------------------------------------- | ----------- |
+| Creating a room       | create_room   | name : String                                                  | ==TODO==    |
+| Leaving a room        | leave_room    | room_id : String<br>user_id : String                           |             |
+| Sending a message     | send_message  | message : String<br>room_id : String                           |             |
+| Deleting a message    | redact_event  | event_id : String<br>room_id : String<br>redaction_id : String |             |
+| Editing a message     | replace_event | message : String<br>room_id : String<br>event_id : String      |             |
+| Pinning a message     | pin_event     | room_id : String<br>event_id_list : \[String]                  |             |
+| Replying to a message | reply_event   | message : String<br>room_id : String<br>event_id : String      |             |
+| Reacting to a message | react_message | message : String<br>room_id : String<br>event_id : String      |             |
+Next to the stimuli are listed the constraints for which the parameters are considered valid. It is assumed a stimulus is only valid if and only if all parameters have valid values.
+
+| Reponse | Parameters                                                  |
+| ------- | ----------------------------------------------------------- |
+| succes  | code : integer<br>id : String                               |
+| error   | code : integer<br>error_msg : String<br>error_text : String |
+
 
 The SUT follows a simple request-reponse format. Therefore for each state we describe the accepted stimuli alongside the possible accepted responses.
 
-Roomless
-- Accepted Stimulus: create_room
-    - constraints: name is not empty
-- Accepted Response: succes
-    - constraints: code is 200
-- Accepted Reponse: error
+
+| Initial<br>State | Accepted Stimulus | Constraints                                                             | Accepted Response | Constraints        | Resulting<br>State |
+| ---------------- | ----------------- | ----------------------------------------------------------------------- | ----------------- | ------------------ | ------------------ |
+| roomless         | create_room       | room_id is valid                                                        | success<br>       | code is 200        | room               |
+| roomless         | create_room       | room_id is not valid                                                    | error             | code is 400 or 403 | roomless           |
+| room             | send_message      | message is valid && room_id is current_room_id                          | success           | code is 200        | room               |
+| room             | send_message      | message is not valid \|\| room_id is not current_room_id                | error             | code is 400 or 403 | room               |
+| room             | redact_event      | event_id exists && room_id is current_room_id && redaction_id is unique |                   |                    |                    |
