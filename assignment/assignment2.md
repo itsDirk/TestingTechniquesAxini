@@ -32,5 +32,23 @@ The interface utilized during testing is the client-server API. Relevant documen
 Our model assumes we start in a state where the user has been logged in and authenticated but nothing else has happened. The only event that can take place at the beginning is creating a room. 
 
 Once a room has been created, we enter a loop allowing the following actions:
-- Sending a message
-- Deleting a message
+- Sending a message,
+- Deleting a message.
+The loop follows a simple request-reponse format, so we will explain all possible transitions in a table following this format.
+
+For each possible action we have a corresponding simulus in the Axini model. The possible responses are either a succes or error response, which all have the same format.
+
+| Stimulus     | Parameters                                                        | Reponse | Parameters                                                  |
+|--------------|-------------------------------------------------------------------|---------|-------------------------------------------------------------|
+| create_room  | name : String                                                     | succes  | code : integer<br>id : integer                              |
+| send_message | message : String<br>room_id : Integer                             | error   | code : integer<br>error_msg : String<br>error_text : String |
+| delete_event | event_id : Integer<br>room_id : Integer<br>redaction_id : Integer |         |                                                             |
+
+The SUT follows a simple request-reponse format. Therefore for each state we describe the accepted stimuli alongside the possible accepted responses.
+
+Roomless
+- Accepted Stimulus: create_room
+    - constraints: name is not empty
+- Accepted Response: succes
+    - constraints: code is 200
+- Accepted Reponse: error
