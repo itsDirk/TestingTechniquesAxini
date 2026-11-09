@@ -117,7 +117,7 @@ class Handler(AbstractHandler):
                 name='homeserver_url',
                 tipe=Type.STRING,
                 description='Base URL of the Matrix homeserver Client-Server API',
-                value='https://localhost:8008/_matrix',
+                value='http://localhost:8008',
             ),
             ConfigurationItem(
                 name='access_token',
