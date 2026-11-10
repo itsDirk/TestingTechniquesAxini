@@ -45,6 +45,19 @@ def test_create_room_posts_name_and_returns_room_id():
     assert result == {'room_id': '!room:example.org'}
 
 
+def test_create_room_forwards_empty_name_to_matrix():
+    with patch(
+        'matrix.matrix_connection.urlopen',
+        return_value=_response({'room_id': '!room:example.org'}),
+    ) as urlopen:
+        connection = MatrixConnection('http://matrix.example.org', 'test-token')
+        connection.create_room('')
+
+    request = urlopen.call_args.args[0]
+    assert request.method == 'POST'
+    assert json.loads(request.data) == {'name': ''}
+
+
 def test_leave_room_posts_to_room_leave_endpoint():
     with patch(
         'matrix.matrix_connection.urlopen',
@@ -57,6 +70,18 @@ def test_leave_room_posts_to_room_leave_endpoint():
     assert request.full_url.endswith('/rooms/%21room%3Aexample.org/leave')
     assert request.method == 'POST'
     assert json.loads(request.data) == {}
+
+
+def test_leave_room_forwards_empty_room_id_to_matrix():
+    with patch(
+        'matrix.matrix_connection.urlopen',
+        return_value=_response({}),
+    ) as urlopen:
+        connection = MatrixConnection('http://matrix.example.org', 'test-token')
+        connection.leave_room('')
+
+    assert urlopen.called
+    assert urlopen.call_args.args[0].method == 'POST'
 
 
 def test_send_message_uses_text_event_endpoint():
@@ -93,6 +118,19 @@ def test_redact_event_uses_supplied_transaction_id():
     assert request.method == 'PUT'
     assert json.loads(request.data) == {}
     assert result == {'event_id': '$redaction:example.org'}
+
+
+def test_redact_event_forwards_empty_ids_to_matrix():
+    with patch(
+        'matrix.matrix_connection.urlopen',
+        return_value=_response({'errcode': 'M_UNRECOGNIZED'}),
+    ) as urlopen:
+        connection = MatrixConnection('http://matrix.example.org', 'test-token')
+        connection.redact_event('!room:example.org', '', '')
+
+    request = urlopen.call_args.args[0]
+    assert request.full_url.endswith('/rooms/%21room%3Aexample.org/redact/')
+    assert request.method == 'PUT'
 
 
 def test_replace_message_uses_matrix_edit_relation():

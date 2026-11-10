@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 from generic.api.label import Label, Sort
+from generic.api import label_pb2
 from generic.api.parameter import Parameter
 from generic.api.type import Type
 from matrix.handler import Handler, MATRIX_CHANNEL
@@ -32,6 +33,12 @@ class MatrixConnectionStub:
         return {'room_id': '!room:example.org'}
 
     def leave_room(self, room_id):
+        if not room_id:
+            raise MatrixConnectionError(
+                'Matrix API returned HTTP 404: Unrecognized request',
+                status_code=404,
+                errcode='M_UNRECOGNIZED',
+            )
         assert room_id == '!room:example.org'
         return {}
 
@@ -73,14 +80,20 @@ class MatrixConnectionStub:
 def _stimulate(handler, name, parameters):
     encoded_parameters = []
     for parameter_name, value in parameters.items():
+        if value is None:
+            encoded_parameters.append(label_pb2.Label.Parameter(name=parameter_name))
+            continue
         tipe = Type.ARRAY if isinstance(value, list) else Type.STRING
         encoded_parameters.append(Parameter(parameter_name, tipe, value))
-    label = Label(
-        Sort.STIMULUS,
-        name,
-        MATRIX_CHANNEL,
-        parameters=encoded_parameters,
-    ).encode()
+    label = label_pb2.Label(
+        type=label_pb2.Label.LabelType.STIMULUS,
+        label=name,
+        channel=MATRIX_CHANNEL,
+        parameters=[
+            parameter if isinstance(parameter, label_pb2.Label.Parameter) else parameter.encode()
+            for parameter in encoded_parameters
+        ],
+    )
     handler.stimulate(label)
 
 
@@ -124,7 +137,24 @@ def test_create_room_returns_matrix_room_id():
     assert _parameters(response) == {'code': 200, 'id': '!room:example.org'}
 
 
-def test_leave_room_requires_authenticated_user_and_returns_room_id():
+def test_leave_room_with_empty_room_id_forwards_matrix_error_even_if_user_differs():
+    handler = _handler()
+
+    _stimulate(handler, 'leave_room', {
+        'room_id': '',
+        'user_id': 'user',
+    })
+
+    response = handler.adapter_core.responses[0]
+    assert response.name == 'error'
+    assert _parameters(response) == {
+        'code': 400,
+        'error_msg': 'M_UNRECOGNIZED',
+        'error_text': 'Matrix API returned HTTP 404: Unrecognized request',
+    }
+
+
+def test_leave_room_with_authenticated_user_succeeds():
     handler = _handler()
 
     _stimulate(handler, 'leave_room', {
@@ -137,7 +167,7 @@ def test_leave_room_requires_authenticated_user_and_returns_room_id():
     assert _parameters(response) == {'code': 200, 'id': '!room:example.org'}
 
 
-def test_leave_room_rejects_different_user():
+def test_leave_room_rejects_different_user_without_impersonating():
     handler = _handler()
 
     _stimulate(handler, 'leave_room', {
@@ -147,7 +177,9 @@ def test_leave_room_rejects_different_user():
 
     response = handler.adapter_core.responses[0]
     assert response.name == 'error'
-    assert 'must match the authenticated Matrix user' in _parameters(response)['error_text']
+    assert _parameters(response)['code'] == 403
+    assert _parameters(response)['error_msg'] == 'M_FORBIDDEN'
+    assert 'access token belongs to @tester:example.org' in _parameters(response)['error_text']
 
 
 def test_send_message_returns_matrix_event_id():
@@ -175,6 +207,35 @@ def test_redact_event_returns_redaction_event_id():
     response = handler.adapter_core.responses[0]
     assert response.name == 'succes'
     assert _parameters(response) == {'code': 200, 'id': '$redaction:example.org'}
+
+
+def test_void_redaction_id_is_sent_as_empty_string_and_matrix_error_is_forwarded():
+    class RejectingConnection(MatrixConnectionStub):
+        def redact_event(self, room_id, event_id, redaction_id):
+            assert redaction_id == ''
+            raise MatrixConnectionError(
+                'Matrix API returned HTTP 400: Missing transaction ID',
+                status_code=400,
+                errcode='M_MISSING_PARAM',
+            )
+
+    handler = _handler()
+    handler.sut = RejectingConnection()
+
+    _stimulate(handler, 'redact_event', {
+        'event_id': '$message:example.org',
+        'room_id': '!room:example.org',
+        'redaction_id': None,
+    })
+
+    assert len(handler.adapter_core.confirmations) == 1
+    response = handler.adapter_core.responses[0]
+    assert response.name == 'error'
+    assert _parameters(response) == {
+        'code': 400,
+        'error_msg': 'M_MISSING_PARAM',
+        'error_text': 'Matrix API returned HTTP 400: Missing transaction ID',
+    }
 
 
 def test_replace_message_returns_new_edit_event_id():
@@ -266,6 +327,53 @@ def test_matrix_api_failure_becomes_model_error_response(caplog):
         'error_text': 'Matrix API returned HTTP 403: Not allowed',
     }
     assert "Matrix stimulus 'create_room' failed: Matrix API returned HTTP 403" in caplog.text
+
+
+def test_http_404_and_405_are_mapped_to_model_supported_error_code():
+    for http_status in (404, 405):
+        class FailingConnection(MatrixConnectionStub):
+            def create_room(self, name):
+                raise MatrixConnectionError(
+                    f'Matrix API returned HTTP {http_status}: Unrecognized request',
+                    status_code=http_status,
+                    errcode='M_UNRECOGNIZED',
+                )
+
+        handler = _handler()
+        handler.sut = FailingConnection()
+        _stimulate(handler, 'create_room', {'name': 'Test room'})
+
+        response = handler.adapter_core.responses[0]
+        assert response.name == 'error'
+        assert _parameters(response) == {
+            'code': 400,
+            'error_msg': 'M_UNRECOGNIZED',
+            'error_text': f'Matrix API returned HTTP {http_status}: Unrecognized request',
+        }
+
+
+def test_empty_input_is_sent_to_matrix_and_matrix_error_is_forwarded():
+    class RejectingMatrix(MatrixConnectionStub):
+        def create_room(self, name):
+            assert name == ''
+            raise MatrixConnectionError(
+                'Matrix API returned HTTP 400: Invalid room name',
+                status_code=400,
+                errcode='M_INVALID_PARAM',
+            )
+
+    handler = _handler()
+    handler.sut = RejectingMatrix()
+
+    _stimulate(handler, 'create_room', {'name': ''})
+
+    response = handler.adapter_core.responses[0]
+    assert response.name == 'error'
+    assert _parameters(response) == {
+        'code': 400,
+        'error_msg': 'M_INVALID_PARAM',
+        'error_text': 'Matrix API returned HTTP 400: Invalid room name',
+    }
 
 
 def test_start_validates_matrix_and_records_authenticated_user():

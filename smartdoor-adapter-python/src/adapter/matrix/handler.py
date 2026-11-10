@@ -83,20 +83,28 @@ class Handler(AbstractHandler):
         if self.sut is None:
             raise RuntimeError('Matrix handler has not been started')
 
-        label = Label.decode(pb_label)
-        parameters = {parameter.name: parameter.value for parameter in label.parameters}
+        try:
+            parameters = self._decode_parameters(pb_label)
+        except (TypeError, ValueError) as error:
+            parameters = {}
+            decode_error = error
+        else:
+            decode_error = None
+
         pb_label.timestamp = time.time_ns()
         pb_label.physical_label = json.dumps(parameters).encode('utf-8')
         self.adapter_core.send_stimulus_confirmation(pb_label)
 
         try:
-            operation = self.operations.get(label.name)
+            if decode_error is not None:
+                raise ValueError(f'Could not decode Matrix stimulus parameters: {decode_error}')
+            operation = self.operations.get(pb_label.label)
             if operation is None:
-                raise ValueError(f'Unsupported Matrix stimulus: {label.name}')
+                raise ValueError(f'Unsupported Matrix stimulus: {pb_label.label}')
             response_id, result = operation(parameters)
             response = self._success_response(response_id)
         except (MatrixConnectionError, ValueError) as error:
-            logging.error("Matrix stimulus '%s' failed: %s", label.name, error)
+            logging.error("Matrix stimulus '%s' failed: %s", pb_label.label, error)
             response = self._error_response(error)
             result = {'error': str(error)}
 
@@ -105,61 +113,63 @@ class Handler(AbstractHandler):
         self.adapter_core.send_response(response)
 
     def _create_room(self, parameters: dict) -> tuple[str, dict]:
-        result = self.sut.create_room(self._required_string(parameters, 'name'))
+        result = self.sut.create_room(self._string_input(parameters, 'name'))
         return self._required_string(result, 'room_id'), result
 
     def _leave_room(self, parameters: dict) -> tuple[str, dict]:
-        room_id = self._required_string(parameters, 'room_id')
-        user_id = self._required_string(parameters, 'user_id')
-        if user_id != self.user_id:
-            raise ValueError(
-                f'leave_room user_id must match the authenticated Matrix user {self.user_id}'
+        room_id = self._string_input(parameters, 'room_id')
+        user_id = self._string_input(parameters, 'user_id')
+        if room_id and user_id != self.user_id:
+            raise MatrixConnectionError(
+                f'Cannot leave as {user_id}; this access token belongs to {self.user_id}',
+                status_code=403,
+                errcode='M_FORBIDDEN',
             )
         result = self.sut.leave_room(room_id)
         return room_id, result
 
     def _send_message(self, parameters: dict) -> tuple[str, dict]:
         result = self.sut.send_message(
-            self._required_string(parameters, 'room_id'),
-            self._required_string(parameters, 'message'),
+            self._string_input(parameters, 'room_id'),
+            self._string_input(parameters, 'message'),
         )
         return self._required_string(result, 'event_id'), result
 
     def _redact_event(self, parameters: dict) -> tuple[str, dict]:
         result = self.sut.redact_event(
-            self._required_string(parameters, 'room_id'),
-            self._required_string(parameters, 'event_id'),
-            self._required_string(parameters, 'redaction_id'),
+            self._string_input(parameters, 'room_id'),
+            self._string_input(parameters, 'event_id'),
+            self._string_input(parameters, 'redaction_id'),
         )
         return self._required_string(result, 'event_id'), result
 
     def _replace_message(self, parameters: dict) -> tuple[str, dict]:
         result = self.sut.replace_message(
-            self._required_string(parameters, 'room_id'),
-            self._required_string(parameters, 'event_id'),
-            self._required_string(parameters, 'message'),
+            self._string_input(parameters, 'room_id'),
+            self._string_input(parameters, 'event_id'),
+            self._string_input(parameters, 'message'),
         )
         return self._required_string(result, 'event_id'), result
 
     def _pin_event(self, parameters: dict) -> tuple[str, dict]:
-        room_id = self._required_string(parameters, 'room_id')
-        event_ids = self._required_string_array(parameters, 'event_id_list')
+        room_id = self._string_input(parameters, 'room_id')
+        event_ids = self._string_array_input(parameters, 'event_id_list')
         result = self.sut.pin_events(room_id, event_ids)
         return self._required_string(result, 'event_id'), result
 
     def _reply_event(self, parameters: dict) -> tuple[str, dict]:
         result = self.sut.reply_message(
-            self._required_string(parameters, 'room_id'),
-            self._required_string(parameters, 'event_id'),
-            self._required_string(parameters, 'message'),
+            self._string_input(parameters, 'room_id'),
+            self._string_input(parameters, 'event_id'),
+            self._string_input(parameters, 'message'),
         )
         return self._required_string(result, 'event_id'), result
 
     def _react_message(self, parameters: dict) -> tuple[str, dict]:
         result = self.sut.react_message(
-            self._required_string(parameters, 'room_id'),
-            self._required_string(parameters, 'event_id'),
-            self._required_string(parameters, 'message'),
+            self._string_input(parameters, 'room_id'),
+            self._string_input(parameters, 'event_id'),
+            self._string_input(parameters, 'message'),
         )
         return self._required_string(result, 'event_id'), result
 
@@ -180,9 +190,13 @@ class Handler(AbstractHandler):
             if isinstance(error, MatrixConnectionError) and error.status_code
             else 400
         )
+        if status_code in (404, 405):
+            status_code = 400
         error_code = (
             error.errcode
             if isinstance(error, MatrixConnectionError) and error.errcode
+            else 'M_UNKNOWN'
+            if isinstance(error, MatrixConnectionError)
             else type(error).__name__
         )
         return Label(
@@ -254,17 +268,50 @@ class Handler(AbstractHandler):
         ])
 
     @staticmethod
-    def _required_string(parameters: dict, name: str) -> str:
+    def _decode_parameters(pb_label: label_pb2.Label) -> dict:
+        parameters = {}
+        for pb_parameter in pb_label.parameters:
+            value_type = pb_parameter.value.WhichOneof('type')
+            if value_type is None:
+                value = None
+            elif value_type == 'string':
+                value = pb_parameter.value.string
+            elif value_type == 'array':
+                value = [
+                    item.string if item.WhichOneof('type') == 'string' else None
+                    for item in pb_parameter.value.array.values
+                ]
+            else:
+                try:
+                    value = Parameter.decode(pb_parameter).value
+                except (TypeError, ValueError):
+                    value = None
+            parameters[pb_parameter.name] = value
+        return parameters
+
+    @staticmethod
+    def _string_input(parameters: dict, name: str) -> str:
         value = parameters.get(name)
-        if not isinstance(value, str) or not value.strip():
-            raise ValueError(f'Matrix input requires a non-empty "{name}" string')
+        if value is None:
+            return ''
+        if isinstance(value, str):
+            return value
+        raise ValueError(f'Matrix input "{name}" must be a string')
+
+    @staticmethod
+    def _required_string(result: dict, name: str) -> str:
+        value = result.get(name)
+        if not isinstance(value, str) or not value:
+            raise ValueError(f'Matrix API response is missing "{name}"')
         return value
 
     @classmethod
-    def _required_string_array(cls, parameters: dict, name: str) -> list[str]:
+    def _string_array_input(cls, parameters: dict, name: str) -> list[str]:
         value = parameters.get(name)
-        if not isinstance(value, list) or not value:
-            raise ValueError(f'Matrix input requires a non-empty "{name}" string array')
-        if any(not isinstance(item, str) or not item.strip() for item in value):
-            raise ValueError(f'Every item in "{name}" must be a non-empty string')
+        if value is None:
+            return []
+        if not isinstance(value, list):
+            raise ValueError(f'Matrix input "{name}" must be a string array')
+        if any(not isinstance(item, str) for item in value):
+            raise ValueError(f'Every item in "{name}" must be a string')
         return value

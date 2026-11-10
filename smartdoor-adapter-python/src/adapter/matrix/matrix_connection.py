@@ -36,8 +36,6 @@ class MatrixConnection:
 
     def create_room(self, name: str) -> dict:
         """Create a room and return its Matrix room ID."""
-        if not name.strip():
-            raise ValueError('room name must not be empty')
         return self._request('POST', '_matrix/client/v3/createRoom', {'name': name})
 
     def leave_room(self, room_id: str) -> dict:
@@ -117,8 +115,6 @@ class MatrixConnection:
 
     @staticmethod
     def _path_id(value: str) -> str:
-        if not value:
-            raise ValueError('Matrix room and event IDs must not be empty')
         return quote(value, safe='')
 
     def _request(self, method: str, path: str, payload: dict = None) -> dict:
