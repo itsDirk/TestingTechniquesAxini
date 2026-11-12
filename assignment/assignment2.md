@@ -95,3 +95,19 @@ The final working model with three seperate cases with a depth of 30 each leads 
 ![TestResults](test-results.png)
 ![testModel](testModel.png)
 
+## Exercise 7: MBT Test Selection
+
+The main variables to vary are the depth of test cases and the number of test cases.
+The first adaptation was going from depth 30 on 3 cases to depth 60 on 6 cases.
+When we did this we found a missing part in our model where we were not taking the M_DUPLICATE_ANNOTATION into account.
+Thanks to the more extensive test we found this and could update the model.
+The second adaptation was going from depth 30 on 3 cases to depth 10 on 3 cases.
+This case was the largest case we could make withotu getting a 100% test coverage.
+The third adaptation was to revert to the default constraint solver instead of z3.
+This resulted in a multitude of failures because the default constraint solver cannot handle the constraints set in the model well.
+
+## Exercise 8: MBT Results
+
+The most primary result from the changes in exercise 7 is that the model was updated based on the results.
+By doing a more extensive testcase we could create an environment that differs from the default.
+This way we were able to test parts of the model we could not test earlier.
