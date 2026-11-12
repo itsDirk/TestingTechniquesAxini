@@ -209,15 +209,10 @@ def test_redact_event_returns_redaction_event_id():
     assert _parameters(response) == {'code': 200, 'id': '$redaction:example.org'}
 
 
-def test_void_redaction_id_is_sent_as_empty_string_and_matrix_error_is_forwarded():
+def test_void_redaction_id_returns_missing_parameter_error_without_calling_matrix():
     class RejectingConnection(MatrixConnectionStub):
         def redact_event(self, room_id, event_id, redaction_id):
-            assert redaction_id == ''
-            raise MatrixConnectionError(
-                'Matrix API returned HTTP 400: Missing transaction ID',
-                status_code=400,
-                errcode='M_MISSING_PARAM',
-            )
+            raise AssertionError('Matrix must not be called with a void parameter')
 
     handler = _handler()
     handler.sut = RejectingConnection()
@@ -234,7 +229,7 @@ def test_void_redaction_id_is_sent_as_empty_string_and_matrix_error_is_forwarded
     assert _parameters(response) == {
         'code': 400,
         'error_msg': 'M_MISSING_PARAM',
-        'error_text': 'Matrix API returned HTTP 400: Missing transaction ID',
+        'error_text': 'Missing required Matrix stimulus parameter "redaction_id"',
     }
 
 

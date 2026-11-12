@@ -293,7 +293,11 @@ class Handler(AbstractHandler):
     def _string_input(parameters: dict, name: str) -> str:
         value = parameters.get(name)
         if value is None:
-            return ''
+            raise MatrixConnectionError(
+                f'Missing required Matrix stimulus parameter "{name}"',
+                status_code=400,
+                errcode='M_MISSING_PARAM',
+            )
         if isinstance(value, str):
             return value
         raise ValueError(f'Matrix input "{name}" must be a string')
