@@ -74,8 +74,10 @@ The SUT follows a simple request-reponse format. Therefore for each state we des
 
 ## Exericise 5: Test Architecture
 
+![Test Architecture](test-setup.drawio.png)
+
 The diagram shows that the test architecture consists out of 3 main parts: the Axini Modeling Platform (AMP), the adapter, and the SUT. AMP is responsible for hosting the model (based on the specifications of Matrix) and generating / validating tests based on this model. These tests consist out of generating stimuli (asking the SUT to do something) and validating the received responses (the reaction of the SUT). All allowed stimuli and responses are defined in the model.
 
 The adapter is responsible for converting the stimuli into requests the SUT can actually understand and passing them on. When the adapter receives a response back, it needs to translate this back into the language AMP understands and pass it back to the testing platform.
 
-Our SUT (Synapse) runs locally in a Docker container. It receives HTTP requests from the adapter and handles them through the Client-Server API. Once it has finished processing the request, it sends an HTTP response which stating whether the request was a succes or whether there was an error during processing/handling.
+Our SUT (Synapse) runs locally in a Docker container. It receives HTTP requests from the adapter and handles them through the Client-Server API. Once it has finished processing the request, it sends an HTTP response stating whether the request was a succes or whether there was an error during processing/handling.
