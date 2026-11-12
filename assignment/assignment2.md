@@ -69,3 +69,13 @@ The SUT follows a simple request-reponse format. Therefore for each state we des
 | room             | send_message      | message is valid && room_id is current_room_id                          | success           | code is 200        | room               |
 | room             | send_message      | message is not valid \|\| room_id is not current_room_id                | error             | code is 400 or 403 | room               |
 | room             | redact_event      | event_id exists && room_id is current_room_id && redaction_id is unique |                   |                    |                    |
+
+
+
+## Exericise 5: Test Architecture
+
+The diagram shows that the test architecture consists out of 3 main parts: the Axini Modeling Platform (AMP), the adapter, and the SUT. AMP is responsible for hosting the model (based on the specifications of Matrix) and generating / validating tests based on this model. These tests consist out of generating stimuli (asking the SUT to do something) and validating the received responses (the reaction of the SUT). All allowed stimuli and responses are defined in the model.
+
+The adapter is responsible for converting the stimuli into requests the SUT can actually understand and passing them on. When the adapter receives a response back, it needs to translate this back into the language AMP understands and pass it back to the testing platform.
+
+Our SUT (Synapse) runs locally in a Docker container. It receives HTTP requests from the adapter and handles them through the Client-Server API. Once it has finished processing the request, it sends an HTTP response which stating whether the request was a succes or whether there was an error during processing/handling.
