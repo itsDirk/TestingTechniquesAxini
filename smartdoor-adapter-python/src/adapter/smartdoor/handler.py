@@ -109,6 +109,7 @@ class Handler(AbstractHandler):
             _response('invalid_passcode'),
             _response('incorrect_passcode'),
             _response('shut_off'),
+            _response('quiescence')
         ]
 
     def default_configuration(self) -> Configuration:
