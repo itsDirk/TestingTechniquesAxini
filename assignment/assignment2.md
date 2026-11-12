@@ -11,7 +11,7 @@
 
 We begin by giving a short summarization of our SUT taken from the first assignment.
 
-Our system-under-test is [Synapse](https://github.com/element-hq/synapse) (v1.164.2), a (home)server developed by [Element](https://element.io/). Synapse is an open source instance of [Matrix](https://matrix.org/) (v1.19) written in Python. Using Synapse, the user can locally run a chat server and connect to it using a web client on [app.element.io](https://app.element.io/). These enable communication in accordance with the Matrix communication protocol. Therefore we will create a model of the Matrix communication protocol and test whether Synapse complies with this protocol.
+Our system-under-test is [Synapse](https://github.com/element-hq/synapse) ([release v1.164.2](https://github.com/element-hq/synapse/releases/tag/v1.164.2)), a (home)server developed by [Element](https://element.io/). Synapse is an open source instance of [Matrix](https://matrix.org/) (v1.19) written in Python. Using Synapse, the user can run a chat server and connect to it using a web client on [app.element.io](https://app.element.io/). These enable communication in accordance with the Matrix communication protocol. Therefore we will create a model of the Matrix communication protocol and test whether Synapse complies with this protocol.
 
 We will be testing the basic messaging functionalities of the SUT, namely creating a room and sending/deleting/editing/pinning/replying to/reacting to a message.
 
