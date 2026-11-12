@@ -91,7 +91,7 @@ Our SUT (Synapse) runs locally in a Docker container. It receives HTTP requests 
 
 ## Exercise 6: MBT Testing
 
-The final working model with three seperate cases with a depth of 30 each leads to a passing result. Thus matrix behaves as expected by our model.
+The final working model with three separate cases with a depth of 30 each leads to a passing result. Thus matrix behaves as expected by our model.
 ![TestResults](test-results.png)
 ![testModel](testModel.png)
 
@@ -102,12 +102,18 @@ The first adaptation was going from depth 30 on 3 cases to depth 60 on 6 cases.
 When we did this we found a missing part in our model where we were not taking the M_DUPLICATE_ANNOTATION into account.
 Thanks to the more extensive test we found this and could update the model.
 The second adaptation was going from depth 30 on 3 cases to depth 10 on 3 cases.
-This case was the largest case we could make withotu getting a 100% test coverage.
+This case was the largest case we could make without getting a 100% test coverage.
 The third adaptation was to revert to the default constraint solver instead of z3.
-This resulted in a multitude of failures because the default constraint solver cannot handle the constraints set in the model well.
+This resulted in a multitude of failures because the default constraint solver cannot handle the constraints set in the model well. Primarily around resolving strings and subset constraints on empty sets.
 
 ## Exercise 8: MBT Results
 
 The most primary result from the changes in exercise 7 is that the model was updated based on the results.
 By doing a more extensive testcase we could create an environment that differs from the default.
-This way we were able to test parts of the model we could not test earlier.
+This way we were able to test parts of the model we could not test earlier. For this we updated the model to not allow sending the same reaction twice. Which is technically an under specification as you are allowed to do so if the are send as reaction to different events.
+
+We also discovered that there are no errors when replacing events that you should not be able to replace with message events according to specification. There it does not mention which error message you are supposed to receive or if any at all for this so far as we found. To take care of this problem  we removed the lines testing for this from the model. As such all we did not find any other problems, and all other test cases passed.
+
+
+
+
