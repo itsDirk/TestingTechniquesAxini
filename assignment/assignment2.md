@@ -89,11 +89,13 @@ The final working model with three separate cases with a depth of 30 each leads 
 The main variables to vary are the depth of test cases and the number of test cases.
 The first adaptation was going from depth 30 on 3 cases to depth 60 on 6 cases.
 When we did this we found a missing part in our model where we were not taking the M_DUPLICATE_ANNOTATION into account.
+![increasedSteps](increased_steps.png)
 Thanks to the more extensive test we found this and could update the model.
 The second adaptation was going from depth 30 on 3 cases to depth 10 on 3 cases.
 This case was the largest case we could make without getting a 100% test coverage.
 The third adaptation was to revert to the default constraint solver instead of z3.
 This resulted in a multitude of failures because the default constraint solver cannot handle the constraints set in the model well. Primarily around resolving strings and subset constraints on empty sets.
+![wrongSolver](wrong_solver.png)
 
 ## Exercise 8: MBT Results
 
