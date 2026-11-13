@@ -74,12 +74,19 @@ The loop follows a simple request-response format, so we will explain all possib
 	Action & Stimulus & Parameters \\
 	\hline
 	Creating a room & ?create\_room & name : string \\
+	\hline
 	Leaving a room & ?leave\_room & \shortstack{room\_id : string\\user\_id : string} \\
+	\hline
 	Sending a message & ?send\_message & \shortstack{message : string\\room\_id : string} \\
+	\hline
 	Deleting a message & ?redact\_event & \shortstack{event\_id : string\\room\_id : string\\redaction\_id : string} \\
+	\hline
 	Editing a message & ?replace\_event & \shortstack{message : string\\room\_id : string\\event\_id : string} \\
+	\hline
 	Pinning a message & ?pin\_event & \shortstack{room\_id : string\\event\_id\_list : [string]} \\
+	\hline
 	Replying to a message & ?reply\_event & \shortstack{message : string\\room\_id : string\\event\_id : string} \\
+	\hline
 	Reacting to a message & ?react\_message & \shortstack{message : string\\room\_id : string\\event\_id : string} \\
 	\hline
 \end{tabular}
@@ -93,6 +100,7 @@ Apart from stimuli, only two valid responses are modeled.
 	Response name & Response & Parameters \\
 	\hline
 	Request succeeded & !succes & \shortstack{code : integer\\id : string} \\
+	\hline
 	Request failed & !error & \shortstack{code : integer\\error\_msg : string\\error\_text : string} \\
 	\hline
 \end{tabular}
