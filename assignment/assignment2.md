@@ -77,12 +77,10 @@ The `matrix_connection.py` acts as a small authenticated HTTP client for Synapse
 The diagram below shows that the test architecture consists out of 3 main parts: the Axini Modeling Platform (AMP), the adapter, and the SUT. AMP is responsible for hosting the model (based on the specifications of Matrix) and generating / validating tests based on this model. These tests consist out of generating stimuli (asking the SUT to do something) and validating the received responses (the reaction of the SUT). All allowed stimuli and responses are defined in the model.
 ![Test architecture of Matrix in AMP](images/test-setup.drawio.png)
 
-The adapter is responsible for converting the stimuli into requests the SUT can actually understand and passing them on. When the adapter receives a response back, it needs to translate this back into the language AMP understands and pass it back to the testing platform.
-
-Our SUT (Synapse) runs locally in a Docker container. It receives HTTP requests from the adapter and handles them through the Client-Server API. Once it has finished processing the request, it sends an HTTP response stating whether the request was a success or whether there was an error during processing/handling.
+The adapter is responsible for converting stimuli from the model in AMP into valid HTTP requests before passing on these requests to the SUT. When the adapter receives a response back, it gets translated back into an AMP response, which is passed on to the testing platform. Our SUT (Synapse) runs locally in a Docker container. We communicate with it over HTTP through the Client-Server API. Once a request is processed, a HTTP response is sent back to the plugin adapter. AMP communicates with with the plugin adapter over the Secure WebSocket protocol, the exact workings of which are outside of the scope of this report.
 
 ## Exercise 6: MBT Testing
-The final working model with three separate cases with a depth of 30 each leads to a passing result. Thus Matrix behaves as expected given our model.
+By running the final working model with three separate test cases and a depth of 30 each, we find that all lead to a passing result. This means that the examined section of Synapse behaves as expected given our model.
 ![Test results AMP](images/test-results.png)
 ![Visualization of test model in AMP](test-model.png)
 
