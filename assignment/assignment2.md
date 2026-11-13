@@ -22,9 +22,15 @@ The interface utilized during testing is the Matrix client-server API. Relevant 
 | Errors              | [Chapter 1.1](https://spec.matrix.org/v1.19/client-server-api/#standard-error-response)  |
 | Logging in          | [Chapter 4.3](https://spec.matrix.org/v1.19/client-server-api/#login)                    |
 | Sending room events | [Chapter 7.7](https://spec.matrix.org/v1.19/client-server-api/#sending-events-to-a-room) |
-| Deleting an event   | [Chapter 7.9](https://spec.matrix.org/v1.19/client-server-api/#redactions)       |
+| Deleting an event   | [Chapter 7.9](https://spec.matrix.org/v1.19/client-server-api/#redactions)               |
 | Creating a room     | [Chapter 8.2](https://spec.matrix.org/v1.19/client-server-api/#creation)                 |
+| leaving a room      | [Chapter 8.5.2](https://spec.matrix.org/v1.19/client-server-api/#leaving-rooms)          |
 | Sending a message   | [Chapter 10.2](https://spec.matrix.org/v1.19/client-server-api/#instant-messaging)       |
+| pinning events      | [Chapter 10.2](https://spec.matrix.org/v1.19/client-server-api/#events-2)                |
+| replying to events  | [Chapter 10.3](https://spec.matrix.org/v1.19/client-server-api/#rich-replies)            |
+| replacing a message | [Chapter 10.39](https://spec.matrix.org/v1.19/client-server-api/#event-replacements)     |
+| reacting to events  | [Chapter 10.40](https://spec.matrix.org/v1.19/client-server-api/#event-annotations-and-reactions) |
+
 
 ## Exercise 3: Description of the Model
 Compared to the testing domain of assignment 1, we have decided to drop tests expecting HTTP status codes 404 (Not Found) and 405 (Method Not Allowed), as they concern invalid HTTP endpoints, and the only way to conclude an endpoint does not exist would be to specify all Matrix endpoints that do exist.
