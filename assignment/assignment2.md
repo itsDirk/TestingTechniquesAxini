@@ -24,12 +24,12 @@ The interface utilized during testing is the Matrix client-server API. Relevant 
 | Sending room events | [Chapter 7.7](https://spec.matrix.org/v1.19/client-server-api/#sending-events-to-a-room) |
 | Deleting an event   | [Chapter 7.9](https://spec.matrix.org/v1.19/client-server-api/#redactions)               |
 | Creating a room     | [Chapter 8.2](https://spec.matrix.org/v1.19/client-server-api/#creation)                 |
-| leaving a room      | [Chapter 8.5.2](https://spec.matrix.org/v1.19/client-server-api/#leaving-rooms)          |
+| Leaving a room      | [Chapter 8.5.2](https://spec.matrix.org/v1.19/client-server-api/#leaving-rooms)          |
 | Sending a message   | [Chapter 10.2](https://spec.matrix.org/v1.19/client-server-api/#instant-messaging)       |
-| pinning events      | [Chapter 10.2](https://spec.matrix.org/v1.19/client-server-api/#events-2)                |
-| replying to events  | [Chapter 10.3](https://spec.matrix.org/v1.19/client-server-api/#rich-replies)            |
-| replacing a message | [Chapter 10.39](https://spec.matrix.org/v1.19/client-server-api/#event-replacements)     |
-| reacting to events  | [Chapter 10.40](https://spec.matrix.org/v1.19/client-server-api/#event-annotations-and-reactions) |
+| Pinning events      | [Chapter 10.2](https://spec.matrix.org/v1.19/client-server-api/#events-2)                |
+| Replying to events  | [Chapter 10.3](https://spec.matrix.org/v1.19/client-server-api/#rich-replies)            |
+| Replacing a message | [Chapter 10.39](https://spec.matrix.org/v1.19/client-server-api/#event-replacements)     |
+| Reacting to events  | [Chapter 10.40](https://spec.matrix.org/v1.19/client-server-api/#event-annotations-and-reactions) |
 
 
 ## Exercise 3: Description of the Model
@@ -106,6 +106,7 @@ We also found that there are no errors when replacing events that one should not
 ### (9) Detected failures
 
 ### (10) Implementation relation
+In both assignments, the interaction with the Synapse server remains mostly the same, namely by sending HTTP requests and receiving the responses. For the first assignment we needed to decide the test cases ourselves and then manually decide whether the response passed the test. In this assignment however, test generation and validation is handled by Axini, and the focus of the implementation was put more on creating a suitable model and adapter for the Axini platform. So in terms of the implementation for the actual testing, this is where the two approaces diverge quite heavily. However, for both approaches you still need the same knowledge on how the connection with Synapse and the API works, so this knowledge is still useful when using different testing methods.
 
 ### (11) Support for test input generation and output checking
 One of the primary features of AMP is that it is able to automatically generate and test output based on the model you create. In contrast to the testing of assignment 1, this means you can put more focus on the structure of your SUT and which functionalities you want to test, rather than coming up with test cases. As mentioned before however, the test generation is not flawless (such as the case with strings) and you still have to manually confirm that everything you want tested is actually being tested, but overall it does enable you to more easily scale up the scope of your testing.
@@ -113,10 +114,10 @@ One of the primary features of AMP is that it is able to automatically generate 
 ### (12) Test selection
 
 ### (13) Modelling notation
-The AML notation is quite easy to use. You can make states and the like quite easily, but when you get to more complicated constraints it quickly becomes harder to read and you get some not obvious syntax. Examples of this is how you need to add all information into strings for updates and constraints and the syntax of for example the subset constraint. The last one you definitely can get used to.
+The AML notation is quite easy to use. You can make states and the like quite easily, but when you get to more complicated constraints it quickly becomes harder to read and you get some not obvious syntax. Examples of this are how you need to add all information into strings for updates and constraints, and the syntax of the language, for example the subset constraint. The last one you definitely can get used to.
 
 ### (14) Usability of AMP
-AMP does have some annoying things to deal with for example that the default constraint solver can not properly handle strings, luckily there is a beta feature to use z3 which can handle such constraints. The same applies for the subset constraint to get subsets out of the empty list. And while there is some backtracking and version control supported it is quite limited. However the tools for visualization are quite nice. You can easily add more information trough notes as needed, unfortunately the visual graph representations can get quite messy quite quickly. This leads to them being not that useful especially if every transition has a lot of constraints. Despite this the explore tool was quite use full to find problems in the model, this primarily because it can give the variables for a current state and its constraints. In short while it has some problems that can be quite annoying to deal with AMP is very usable.
+AMP does have some annoying things to deal with, for example that the default constraint solver can not properly handle strings. Luckily there is a beta feature to use z3 which can handle such constraints. The same applies for the subset constraint to get subsets out of the empty list. And while there is some backtracking and version control supported, it is quite limited. However, the tools for visualization are quite nice. You can easily add more information through notes as needed, but unfortunately the visual graph representations can get messy quite quickly. This leads to them being not that useful, especially if every transition has a lot of constraints. Despite this, the explore tool was quite use full to find problems in the model, primarily because it can give the variables for a current state and its constraints. In short while it has some problems that can be quite annoying to deal with AMP is very usable.
 
 ### (15) Effort necessary for modelling
 Setting up the adapter itself was relatively easy, as the provided Python plugin adapter already handled the communication with AMP. Testing it was more difficult, because a failed test did not immediately show whether the problem was in the model, the adapter, or Matrix as SUT. We had to compare the models expectations with the adapters requests and responses, and with Synapses actual behaviour, to find the cause. Changes to the models interface, such as stimulus names or parameters, also required corresponding changes in the adapter to keep them aligned. Overall, testing and debugging required more effort than setting up the adapter.
