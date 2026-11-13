@@ -102,6 +102,7 @@ We also found that there are no errors when replacing events that one should not
 ### (10) Implementation relation
 
 ### (11) Support for test input generation and output checking
+One of the primary features of AMP is that it is able to automatically generate and test output based on the model you create. In contrast to the testing of assignment 1, this means you can put more focus on the structure of your SUT and which functionalities you want to test, rather than coming up with test cases. As mentioned before however, the test generation is not flawless (such as the case with strings) and you still have to manually confirm that everything you want tested is actually being tested, but overall it does enable you to more easily scale up the scope of your testing.
 
 ### (12) Test selection
 
