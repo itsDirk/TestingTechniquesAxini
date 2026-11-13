@@ -1,7 +1,7 @@
 # Assignment 2
 ---
 - Robin Brevink
-- Bas Schram
+- Bas Schram: s1077289
 - Dirk van Roosmalen: s1176271
 - Kars Visscher: s1170434
 ---
