@@ -1,0 +1,58 @@
+external('matrix7') {
+  stimulus 'create_room', {'name'=>:string}
+  stimulus 'leave_room', {'room_id'=>:string,'user_id'=>:string}
+  stimulus 'send_message', {'message'=>:string, 'room_id'=>:string}
+  stimulus 'redact_event', {'event_id'=>:string,'room_id'=>:string,'redaction_id'=>:string}
+  stimulus 'replace_message', {'message'=>:string, 'room_id'=>:string, 'event_id'=>:string}
+  stimulus 'pin_event', {'room_id'=>:string, 'event_id_list'=>[:string]}
+  stimulus 'reply_event', {'message'=>:string, 'room_id'=>:string, 'event_id'=>:string}
+  stimulus 'react_message', {'message'=>:string, 'room_id'=>:string, 'event_id'=>:string}
+  response 'error', {'code'=>:integer, 'error_msg'=>:string, 'error_text'=>:string}
+  response 'succes', {'code'=>:integer, 'id'=>:string}
+}
+
+timeout 5
+
+process('main') {
+  var 'error_msgs', [:string],['M_BAD_JSON','M_FORBIDDEN','M_LIMIT_EXCEEDED','M_MISSING_TOKEN','M_NOT_FOUND','M_NOT_JSON','M_RESOURCE_LIMIT_EXCEEDED','M_UNKNOWN','M_UNKNOWN_DEVICE','M_UNKNOWN_TOKEN','M_UNRECOGNIZED','M_USER_LIMIT_EXCEEDED','M_USER_LOCKED','M_USER_SUSPENDED','M_BAD_STATE','M_CANNOT_LEAVE_SERVER_NOTICE_ROOM','M_CAPTCHA_INVALID','M_CAPTCHA_NEEDED','M_EXCLUSIVE','M_GUEST_ACCESS_FORBIDDEN','M_INCOMPATIBLE_ROOM_VERSION','M_INVALID_PARAM','M_INVALID_ROOM_STATE','M_INVALID_USERNAME','M_MISSING_PARAM','M_ROOM_IN_USE','M_SERVER_NOT_TRUSTED','M_THREEPID_AUTH_FAILED','M_THREEPID_DENIED','M_THREEPID_IN_USE','M_THREEPID_MEDIUM_NOT_SUPPORTED','M_THREEPID_NOT_FOUND','M_TOO_LARGE','M_UNAUTHORIZED','M_UNSUPPORTED_ROOM_VERSION','M_USER_DEACTIVATED','M_USER_IN_USE'] # All expected error messages
+
+  var 'current_room_id', :string
+  var 'event_ids', [:string],[]
+  var 'nreplace_ids',[:string],[]
+  var 'transaction_ids', [:string],[]
+  var 'reg_user_id',:string,'user'
+  var 'temp_id',:string
+  var 'reactions',[:string],[]
+
+  state 'roomless'
+    choice {
+      o { receive 'create_room', constraint: 'name != :void '; send 'succes',constraint: 'code==200 && id!= :void',note: ['room'],update: 'current_room_id=id';goto 'room' }
+      o { receive 'create_room', constraint: 'name == :void'; send 'error',constraint: 'code in [400,403] && error_msg in error_msgs && error_text!= :void';goto 'roomless' }
+      }
+
+
+  state 'room'
+    choice {
+      o { receive 'send_message', constraint: 'message != :void&& room_id==current_room_id';send 'succes',constraint: 'code==200 && id!= :void',update: 'event_ids += [id]' ; goto 'room' }
+      o { receive 'send_message', constraint: 'message== :void  && room_id==current_room_id'; send 'error',constraint: 'code in [400,403] && error_msg in error_msgs && error_text!= :void' ; goto 'room' }
+
+      o { receive 'redact_event', constraint: 'event_id in event_ids && room_id==current_room_id && redaction_id != :void && redaction_id != "" && !(redaction_id in transaction_ids)', update: 'transaction_ids += [redaction_id]; temp_id= event_id';send 'succes', constraint: 'code==200 && id!= :void', update: 'event_ids += [id];event_ids -= [temp_id];nreplace_ids += [id]'; goto 'room' }
+      o { receive 'redact_event', constraint: 'event_id in event_ids && room_id==current_room_id && redaction_id != :void && redaction_id != "" && !(redaction_id in transaction_ids)'; send 'error',constraint: 'code==429 && error_msg=="M_LIMIT_EXCEEDED" && error_text!= :void';goto 'room' }
+
+      #o { receive 'leave_room', constraint: 'room_id==current_room_id && user_id==reg_user_id'; send 'succes',constraint: 'code==200 && id!= :void' ,note:['roomless']; goto 'roomless' }
+      o {receive 'leave_room', constraint: 'room_id== "" && user_id==reg_user_id';send 'error',constraint: 'code in [400,403] && error_msg in error_msgs && error_text!= :void' ; goto 'room' }
+
+      o { receive 'replace_message', constraint: 'message != :void  && room_id==current_room_id && event_id in event_ids && !(event_id in nreplace_ids)',note: "succes";send 'succes',constraint: 'code==200 && id!= :void' ,update: 'event_ids += [id]; nreplace_ids += [id]'; goto 'room' }
+      o {receive 'replace_message', constraint: 'message == :void && room_id==current_room_id && event_id in event_ids',note: "error m" ;send 'error',constraint: 'code in [400,403] && error_msg in error_msgs && error_text!= :void'; goto 'room' }
+
+
+      o { receive 'pin_event', constraint: 'room_id==current_room_id && event_id_list <~ event_ids';send 'succes',constraint: 'code==200 && id!= :void' ,update: 'event_ids += [id];nreplace_ids += [id]'; goto 'room' }
+      o {receive 'pin_event', constraint: 'room_id== "" && event_id_list <~ event_ids';send 'error',constraint: 'code in [400,403] && error_msg in error_msgs && error_text!= :void' ; goto 'room' }
+
+      o { receive 'reply_event', constraint: 'message != :void && room_id==current_room_id && event_id in event_ids';send 'succes',constraint: 'code==200 && id!= :void' ,update: 'event_ids += [id]'; goto 'room' }
+      o { receive 'reply_event', constraint: 'message ==:void && room_id==current_room_id && event_id in event_ids'; send 'error',constraint: 'code in [400,403] && error_msg in error_msgs && error_text!= :void' ; goto 'room' }
+
+      o { receive 'react_message', constraint: 'message != :void && !(message in reactions)  && room_id==current_room_id && event_id in event_ids',update: 'reactions+=[message]';send 'succes',constraint: 'code==200 && id!= :void' ,update: 'event_ids += [id]'; goto 'room' }
+      o { receive 'react_message', constraint: 'message == :void && room_id==current_room_id && event_id in event_ids'; send 'error',constraint: 'code in [400,403] && error_msg in error_msgs && error_text!= :void' ; goto 'room' }
+    }
+}
