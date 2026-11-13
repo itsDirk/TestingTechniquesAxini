@@ -56,7 +56,8 @@ Apart from stimuli, only two valid responses are modeled.
 | Request succeeded | !succes  | code : integer<br>id : string                               |
 | Request failed    | !error   | code : integer<br>error_msg : string<br>error_text : string |
 
-The SUT follows a simple request-response format. Therefore for each state we describe the accepted stimuli alongside the possible accepted responses.
+The SUT follows a simple request-response format. Therefore for each state we describe the accepted stimuli alongside the possible accepted responses. The generated visualization of our model is pictured below.
+![Visualization of test model in AMP](test-model.png)
 
 Starting from the initial state *roomless*, the user can create a room which can either fail or succeed. It it fails, the user is back in state *roomless*. If it succeeds, the user is sent to state *room*. From here, the user can execute any of the message-related actions, assuming they can supply the valid parameters. Actions like for example message deletion require a message to have been sent already. To achieve this, we keep track of a list of valid messages (`event_ids`), which is referenced in one of the constraints: `event_id in event_ids`.
 
@@ -82,28 +83,18 @@ The adapter is responsible for converting stimuli from the model in AMP into val
 ## Exercise 6: MBT Testing
 By running the final working model with three separate test cases and a depth of 30 each, we find that all lead to a passing result. This means that the examined section of Synapse behaves as expected given our model.
 ![Test results AMP](images/test-results.png)
-![Visualization of test model in AMP](test-model.png)
 
 ## Exercise 7: MBT Test Selection
-
-The main variables to vary are the depth of test cases and the number of test cases.
-The first adaptation was going from depth 30 on 3 cases to depth 60 on 6 cases.
-When we did this we found a missing part in our model where we were not taking the M_DUPLICATE_ANNOTATION into account.
+When generating tests, the main variables to vary are the depth of test cases and the number of test cases. The first adaptation was going from depth 30 on 3 cases to depth 60 on 6 cases. When we did this we found a missing part in our model where we were not taking the `M_DUPLICATE_ANNOTATION` error into account.
 ![increasedSteps](increased_steps.png)
-Thanks to the more extensive test we found this and could update the model.
-The second adaptation was going from depth 30 on 3 cases to depth 10 on 3 cases.
-This case was the largest case we could make without getting a 100% test coverage.
-The third adaptation was to revert to the default constraint solver instead of z3.
-This resulted in a multitude of failures because the default constraint solver cannot handle the constraints set in the model well. Primarily around resolving strings and subset constraints on empty sets.
+
+Thanks to the more extensive test we found this error and could update the model. The second adaptation was going from depth 30 on 3 cases to depth 10 on 3 cases. This case was the largest case we could make without getting a 100% test coverage. The third adaptation was to revert to the default constraint solver instead of z3. This resulted in a multitude of failures because the default constraint solver cannot handle the constraints set in the model well, primarily around resolving strings and subset constraints on empty sets.
 ![wrongSolver](wrong_solver.png)
 
 ## Exercise 8: MBT Results
+The primary result from the changes in exercise 7 is that the model was updated based on the results. By doing a more extensive test case, we could create an environment that differs from the default. This way we were able to test parts of the model we could not test earlier. For this we updated the model to not allow sending the same reaction twice, which is technically an under specification as one is allowed to do so given that they are sent as reaction to different events.
 
-The most primary result from the changes in exercise 7 is that the model was updated based on the results.
-By doing a more extensive testcase we could create an environment that differs from the default.
-This way we were able to test parts of the model we could not test earlier. For this we updated the model to not allow sending the same reaction twice. Which is technically an under specification as you are allowed to do so if the are send as reaction to different events.
-
-We also discovered that there are no errors when replacing events that you should not be able to replace with message events according to specification. There it does not mention which error message you are supposed to receive or if any at all for this so far as we found. To take care of this problem  we removed the lines testing for this from the model. As such all we did not find any other problems, and all other test cases passed.
+We also found that there are no errors when replacing events that one should not be able to replace with message events according to the specification. As far as we found, the specification does not mention the exact error message that is supposed to be returned in this case, if any at all. To solve this, we removed the lines in the model testing for this error. Apart from this, we did not find any other problems and all other test cases passed.
 
 ## Evaluation
 ### (9) Detected failures
