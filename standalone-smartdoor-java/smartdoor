@@ -1,9 +1,0 @@
-#!/bin/sh
-
-# Convenience script to start the SmartDoor SUT.
-
-JAVA=/usr/bin/java
-VERSION=0.1
-JAR_FILE=standalone-smartdoor-${VERSION}-jar-with-dependencies.jar
-
-$JAVA -jar ./target/${JAR_FILE}
