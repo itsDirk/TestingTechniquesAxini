@@ -5,6 +5,10 @@
 - Dirk van Roosmalen: s1176271
 - Kars Visscher: s1170434
 ---
+
+# Exercise 1: Smartdoor
+The source code for our SmartDoor model can be viewed in the Axini Modelling Platform with the correct credentials under "SmartDoor (RU 2026 - Group 07) / Bas" ([link](https://course02.axini.com/test_sets/a788cad7-e103-4c0c-92e6-b1ebfb27e557/model)).
+
 # Exercise 2: Description of SUT and test scope
 The description of our SUT and the scope of the tests is similar to that of assignment 1.
 
