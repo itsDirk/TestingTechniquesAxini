@@ -60,6 +60,10 @@ The SUT follows a simple request-response format. Therefore for each state we de
 
 Starting from the initial state *roomless*, the user can create a room which can either fail or succeed. It it fails, the user is back in state *roomless*. If it succeeds, the user is sent to state *room*. From here, the user can execute any of the message-related actions, assuming they can supply the valid parameters. Actions like for example message deletion require a message to have been sent already. To achieve this, we keep track of a list of valid messages (`event_ids`), which is referenced in one of the constraints: `event_id in event_ids`.
 
+There are also several events that are not eligible to be replaced by a message, of these id's is kept track in `nreplace_ids`. The array `transaction_ids` is used to guarantee that the transaction id's given are unique. The final array `reactions` is used to do the same for reactions, this is an under specification as by the matrix protocol you are allowed to send the same reaction to different events, but this would result in a significantly more complicated data structure and constraints. These variables were needed to make the model more general as with just states we could only have a specific finite amount of event id's at most which is not the case in the matrix protocol. 
+
+Then we still have some simple variables: `current_room_id` which describes the current room id that is needed in most room events , `temp_id` which is used to temporarily remember some data from a receive that is needed in a send and `reg_user_id` which is used to get the user id for the out commented test case of successfully leaving a room. This should work in the case the `reg_user_id` matches the actual user id.
+
 ## Exercise 4: Adapter
 The plugin adapter is situated between the remote AMP and our locally run SUT. It's primary purpose is to facilitate a connection between the two. 
 
