@@ -105,6 +105,7 @@ We also found that there are no errors when replacing events that one should not
 ## Evaluation
 ### (9) Detected failures
 
+
 ### (10) Implementation relation
 In both assignments, the interaction with the Synapse server remains mostly the same, namely by sending HTTP requests and receiving the responses. For the first assignment we needed to decide the test cases ourselves and then manually decide whether the response passed the test. In this assignment however, test generation and validation is handled by Axini, and the focus of the implementation was put more on creating a suitable model and adapter for the Axini platform. So in terms of the implementation for the actual testing, this is where the two approaces diverge quite heavily. However, for both approaches you still need the same knowledge on how the connection with Synapse and the API works, so this knowledge is still useful when using different testing methods.
 
@@ -112,6 +113,9 @@ In both assignments, the interaction with the Synapse server remains mostly the 
 One of the primary features of AMP is that it is able to automatically generate and test output based on the model you create. In contrast to the testing of assignment 1, this means you can put more focus on the structure of your SUT and which functionalities you want to test, rather than coming up with test cases. As mentioned before however, the test generation is not flawless (such as the case with strings) and you still have to manually confirm that everything you want tested is actually being tested, but overall it does enable you to more easily scale up the scope of your testing.
 
 ### (12) Test selection
+In the first assignment, we had no real systematic method of coming up with concrete test cases. We took a section of the SUT that we wanted to test and looked at the specification for that functionality. We then simply wrote down what came up first, which gave us a list of a dozen or so both correctly and incorrectly send a message using the client-server API. This set was by no means exhaustive for the functionality we wanted to test, and we kept thinking of new distinct test cases.
+
+Using AMP, we did not have to select any tests to begin with. We simply described the expected behavior of the system according to the specification and AMP took care of generating valid tests for us. Creating and tweaking the model however still took some effort, making it less feasible for smaller numbers of test cases.
 
 ### (13) Modelling notation
 The AML notation is quite easy to use. You can make states and the like quite easily, but when you get to more complicated constraints it quickly becomes harder to read and you get some not obvious syntax. Examples of this are how you need to add all information into strings for updates and constraints, and the syntax of the language, for example the subset constraint. The last one you definitely can get used to.
