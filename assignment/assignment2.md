@@ -105,15 +105,18 @@ This way we were able to test parts of the model we could not test earlier. For 
 
 We also discovered that there are no errors when replacing events that you should not be able to replace with message events according to specification. There it does not mention which error message you are supposed to receive or if any at all for this so far as we found. To take care of this problem  we removed the lines testing for this from the model. As such all we did not find any other problems, and all other test cases passed.
 
-##evaluation
-#9 detected failures
-#10 implementation relation
-#11 support for test input generation as well as output checking
-#12 method of test selection
-#13 modelling notation: its expressiveness and ease of use
-#14 usability, ease of use of the tool
-#15 effort necessary for modelling, setting up the MBT environment (adapter), test-
-ing, and analysis
+## Evaluation
+### (9) Detected failures
 
+### (10) Implementation relation
 
+### (11) Support for test input generation and output checking
+
+### (12) Test selection
+
+### (13) Modelling notation
+
+### (14) Usability of AMP
+
+### (15) Effort necessary for modelling
 
