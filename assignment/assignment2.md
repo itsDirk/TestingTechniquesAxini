@@ -115,8 +115,10 @@ We also discovered that there are no errors when replacing events that you shoul
 ### (12) Test selection
 
 ### (13) Modelling notation
+The AML notation is quite easy to use. You can make states and the like quite easily, but when you get to more complicated constraints it quickly becomes harder to read and you get some not obvious syntax. Examples of this is how you need to add all information into strings for updates and constraints and the syntax of for example the subset constraint. The last one you definitely can get used to.
 
 ### (14) Usability of AMP
+AMP does have some annoying things to deal with for example that the default constraint solver can not properly handle strings, luckily there is a beta feature to use z3 which can handle such constraints. The same applies for the subset constraint to get subsets out of the empty list. And while there is some backtracking and version control supported it is quite limited. However the tools for visualization are quite nice. You can easily add more information trough notes as needed, unfortunately the visual graph representations can get quite messy quite quickly. This leads to them being not that useful especially if every transition has a lot of constraints. Despite this the explore tool was quite use full to find problems in the model, this primarily because it can give the variables for a current state and its constraints. In short while it has some problems that can be quite annoying to deal with AMP is very usable.
 
 ### (15) Effort necessary for modelling
 
